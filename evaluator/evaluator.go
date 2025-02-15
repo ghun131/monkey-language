@@ -12,6 +12,11 @@ var (
 	FALSE = &object.Boolean{Value: false}
 )
 
+func quote(node ast.Node, env *object.Environment) object.Object {
+	node = evalUnquoteCalls(node, env)
+	return &object.Quote{Node: node}
+}
+
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 
@@ -72,6 +77,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Function{Parameters: params, Env: env, Body: body}
 
 	case *ast.CallExpression:
+		if node.Function.TokenLiteral() == "quote" {
+			return quote(node.Arguments[0], env)
+		}
 		function := Eval(node.Function, env)
 		if isError(function) {
 			return function
